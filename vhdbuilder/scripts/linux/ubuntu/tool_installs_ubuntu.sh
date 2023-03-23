@@ -24,8 +24,30 @@ installAscBaseline() {
    retrycmd_if_failure_no_stats 120 5 25 dpkg -i $ASC_BASELINE_TMP || exit $ERR_APT_INSTALL_TIMEOUT
    sudo cp /opt/microsoft/asc-baseline/baselines/*.xml /opt/microsoft/asc-baseline/
    cd /opt/microsoft/asc-baseline
+
+    echo "TOBIASB: Getting help for ascbaseline"
+    $ASC_HELP=$(ascbaseline -h)
+    echo "TOBIASB: 'ascbaseline -h': '$ASC_HELP'"
+    $ASC_HELP=$(ascbaseline --help)
+    echo "TOBIASB: 'ascbaseline --help': '$ASC_HELP'"
+    $ASC_HELP=$(ascbaseline -?)
+    echo "TOBIASB: 'ascbaseline -?': '$ASC_HELP'"
+    echo "TOBIASB: Getting help for ascremediate"
+    $ASC_HELP=$(ascremediate -h)
+    echo "TOBIASB: 'ascremediate -h': '$ASC_HELP'"
+    $ASC_HELP=$(ascremediate --help)
+    echo "TOBIASB: 'ascremediate --help': '$ASC_HELP'"
+    $ASC_HELP=$(ascremediate -?)
+    echo "TOBIASB: 'ascremediate -?': '$ASC_HELP'"
+
+    echo "TOBIASB: Running 'ascbaseline -d .'"
    sudo ./ascbaseline -d .
+   echo "TOBIASB: Running 'ascremediate -d . -m all'"
    sudo ./ascremediate -d . -m all
+   echo "TOBIASB: Running 'ascbaseline -d .' again"
+   ASC_BASELINE_OUTPUT=$(sudo ./ascbaseline -d .)
+    echo "TOBIASB: 'ascbaseline -d .': '$ASC_BASELINE_OUTPUT'"
+   echo "TOBIASB: Running 'ascbaseline -d . | grep -B2 -A6 \"FAIL\"'"
    sudo ./ascbaseline -d . | grep -B2 -A6 "FAIL"
    cd -
    echo "Check UDF"
