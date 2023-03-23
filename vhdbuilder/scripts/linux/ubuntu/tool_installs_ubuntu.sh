@@ -25,30 +25,45 @@ installAscBaseline() {
    sudo cp /opt/microsoft/asc-baseline/baselines/*.xml /opt/microsoft/asc-baseline/
    cd /opt/microsoft/asc-baseline
 
-    echo "TOBIASB: Getting help for ascbaseline"
-    ASC_HELP=$(ascbaseline -h)
-    echo "TOBIASB: 'ascbaseline -h': '$ASC_HELP'"
-    ASC_HELP=$(ascbaseline --help)
-    echo "TOBIASB: 'ascbaseline --help': '$ASC_HELP'"
-    ASC_HELP=$(ascbaseline -?)
-    echo "TOBIASB: 'ascbaseline -?': '$ASC_HELP'"
+    echo "TOBIASB: Getting help for ./ascbaseline"
+    ASC_HELP=$(./ascbaseline -h)
+    echo "TOBIASB: './ascbaseline -h': '$ASC_HELP'"
+    ASC_HELP=$(./ascbaseline --help)
+    echo "TOBIASB: './ascbaseline --help': '$ASC_HELP'"
+    ASC_HELP=$(./ascbaseline -?)
+    echo "TOBIASB: './ascbaseline -?': '$ASC_HELP'"
     echo "TOBIASB: Getting help for ascremediate"
-    ASC_HELP=$(ascremediate -h)
-    echo "TOBIASB: 'ascremediate -h': '$ASC_HELP'"
-    ASC_HELP=$(ascremediate --help)
-    echo "TOBIASB: 'ascremediate --help': '$ASC_HELP'"
-    ASC_HELP=$(ascremediate -?)
-    echo "TOBIASB: 'ascremediate -?': '$ASC_HELP'"
+    ASC_HELP=$(./ascremediate -h)
+    echo "TOBIASB: './ascremediate -h': '$ASC_HELP'"
+    ASC_HELP=$(./ascremediate --help)
+    echo "TOBIASB: './ascremediate --help': '$ASC_HELP'"
+    ASC_HELP=$(./ascremediate -?)
+    echo "TOBIASB: './ascremediate -?': '$ASC_HELP'"
 
-    echo "TOBIASB: Running 'ascbaseline -d .'"
-   sudo ./ascbaseline -d .
-   echo "TOBIASB: Running 'ascremediate -d . -m all'"
-   sudo ./ascremediate -d . -m all
-   echo "TOBIASB: Running 'ascbaseline -d .' again"
-   ASC_BASELINE_OUTPUT=$(sudo ./ascbaseline -d .)
-    echo "TOBIASB: 'ascbaseline -d .': '$ASC_BASELINE_OUTPUT'"
-   echo "TOBIASB: Running 'ascbaseline -d . | grep -B2 -A6 \"FAIL\"'"
-   sudo ./ascbaseline -d . | grep -B2 -A6 "FAIL"
+    echo "TOBIASB: /etc/ssh/sshd_config before anything: "
+    sudo sed 's/^/TOBIASB: sshd_config BEFORE: /g' /etc/ssh/sshd_config
+
+    echo "TOBIASB: Running 'ascbaseline -d . -a 106.11' before remediation, which should only audit the denyusers thinger"
+    sudo ./ascbaseline -d . -a 106.11 | sed 's/^/TOBIASB--BEFORE REMEDIATE: ascbaseline -d . -a 106.11: /g'
+
+    echo "TOBIASB: Running ./ascremediate -d . -m 106.11, which should only remediate the denyusers thinger"
+    sudo ./ascremediate -d . -m 106.11 | sed 's/^/TOBIASB: ascremediate -d . -m 106.11: /g'
+
+    echo "TOBIASB: Running 'ascbaseline -d . -a 106.11' after remediation, which should only audit the denyusers thinger"
+    sudo ./ascbaseline -d . -a 106.11 | sed 's/^/TOBIASB--AFTER REMEDIATE: ascbaseline -d . -a 106.11: /g'
+
+    echo "TOBIASB: /etc/ssh/sshd_config after everything: "
+    sudo sed 's/^/TOBIASB: sshd_config AFTER: /g' /etc/ssh/sshd_config
+
+#     echo "TOBIASB: Running 'ascbaseline -d .'"
+#    sudo ./ascbaseline -d .
+#    echo "TOBIASB: Running 'ascremediate -d . -m all'"
+#    sudo ./ascremediate -d . -m all
+#    echo "TOBIASB: Running './ascbaseline -d .' again"
+#    ASC_BASELINE_OUTPUT=$(sudo ./ascbaseline -d .)
+#     echo "TOBIASB: './ascbaseline -d .': '$ASC_BASELINE_OUTPUT'"
+#    echo "TOBIASB: Running './ascbaseline -d . | grep -B2 -A6 \"FAIL\"'"
+#    sudo ./ascbaseline -d . | grep -B2 -A6 "FAIL"
    cd -
    echo "Check UDF"
    cat /etc/modprobe.d/*.conf | grep udf
