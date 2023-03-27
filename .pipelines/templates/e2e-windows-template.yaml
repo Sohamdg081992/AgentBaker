@@ -25,7 +25,7 @@ jobs:
         export WINDOWS_E2E_IMAGE=${{ parameters.windowsImage }}
         export WINDOWS_E2E_OSSKU=${{ parameters.windowsOSSKU }}
         export WINDOWS_E2E_VMSIZE=${{ parameters.windowsVMSize }}
-        export WINDOWS_E2E_STORAGE_ACCOUNT=${{ parameters.storageAccount }}
+        export WINDOWS_E2E_STORAGE_ACCOUNT=${{ parameters.storageAccount }}$RANDOM
         mkdir -p $WINDOWS_E2E_IMAGE
         cp -r e2e/* $WINDOWS_E2E_IMAGE
         go version
