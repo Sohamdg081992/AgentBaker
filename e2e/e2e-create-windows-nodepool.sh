@@ -7,8 +7,10 @@ source e2e-helper.sh
 log "Starting to create windows nodepool"
 
 if [[ "$RESOURCE_GROUP_NAME" == *"windows"*  ]]; then
-    RESOURCE_GROUP_NAME="$RESOURCE_GROUP_NAME"-"$WINDOWS_E2E_IMAGE"-v2
+    echo "$KUBERNETES_VERSION"
+    RESOURCE_GROUP_NAME="$RESOURCE_GROUP_NAME"-"$WINDOWS_E2E_IMAGE"-"$KUBERNETES_VERSION"
 fi
+echo $RESOURCE_GROUP_NAME
 
 out=$(az aks nodepool list --cluster-name $CLUSTER_NAME -g $RESOURCE_GROUP_NAME | jq '.[].name')
 

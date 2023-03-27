@@ -43,7 +43,7 @@ collect-logs() {
     set -x
 }
 
-RESOURCE_GROUP_NAME="$RESOURCE_GROUP_NAME"-"$WINDOWS_E2E_IMAGE"-v2
+RESOURCE_GROUP_NAME="$RESOURCE_GROUP_NAME"-"$WINDOWS_E2E_IMAGE"-"$KUBERNETES_VERSION"
 
 DEPLOYMENT_VMSS_NAME="$(mktemp -u winXXXXX | tr '[:upper:]' '[:lower:]')"
 export DEPLOYMENT_VMSS_NAME
@@ -274,3 +274,6 @@ else
     waitForDeleteEndTime=$(date +%s)
     log "Waited $((waitForDeleteEndTime-waitForDeleteStartTime)) seconds to delete VMSS and node"   
 fi
+
+# free the SA created. (TO-DO: ultimate solution) delete the resource group if test passed (save the resource group for rca)
+# delete_storage_account

@@ -17,10 +17,17 @@ exec_on_host() {
 }
 
 create_storage_account() {
-    set +x
+    # set +x
     az storage account create -n $WINDOWS_E2E_STORAGE_ACCOUNT -g $RESOURCE_GROUP_NAME -l $LOCATION
     account_key=$(az storage account keys list --account-name $WINDOWS_E2E_STORAGE_ACCOUNT --query "[0].value")
     az storage container create -n "tmp" --account-name $WINDOWS_E2E_STORAGE_ACCOUNT --account-key $account_key
+    # set -x
+}
+
+# free the storage account automatically otherwise it will be reclaimed after 3 days
+delete_storage_account() {
+    set +x          
+    az storage account create -n $WINDOWS_E2E_STORAGE_ACCOUNT -g $RESOURCE_GROUP_NAME -l $LOCATION --yes  || echo "unable to delete storage account ${storage_account}, will continue..."
     set -x
 }
 
@@ -30,7 +37,7 @@ upload_linux_file_to_storage_account() {
     MC_VMSS_NAME=$(az vmss list -g $MC_RESOURCE_GROUP_NAME --query "[?contains(name, 'nodepool')]" -ojson | jq -r '.[0].name')
     VMSS_INSTANCE_ID="$(az vmss list-instances --name $MC_VMSS_NAME -g $MC_RESOURCE_GROUP_NAME | jq -r '.[0].instanceId')"
 
-    set +x
+    # set +x
     expiryTime=$(date --date="2 day" +%Y-%m-%d)
     account_key=$(az storage account keys list --account-name $WINDOWS_E2E_STORAGE_ACCOUNT --query "[0].value")
     token=$(az storage container generate-sas --account-name $WINDOWS_E2E_STORAGE_ACCOUNT --account-key $account_key --permissions 'w' --expiry $expiryTime --name "tmp")
@@ -42,7 +49,7 @@ upload_linux_file_to_storage_account() {
         --instance-id $VMSS_INSTANCE_ID \
         --scripts "cat /etc/kubernetes/azure.json > /home/fields.json; cat /etc/kubernetes/certs/apiserver.crt | base64 -w 0 > /home/apiserver.crt; cat /etc/kubernetes/certs/ca.crt | base64 -w 0 > /home/ca.crt; cat /etc/kubernetes/certs/client.key | base64 -w 0 > /home/client.key; cat /var/lib/kubelet/bootstrap-kubeconfig > /home/bootstrap-kubeconfig; cd /home; zip file.zip fields.json apiserver.crt ca.crt client.key bootstrap-kubeconfig; wget https://aka.ms/downloadazcopy-v10-linux; tar -xvf downloadazcopy-v10-linux; cd ./azcopy_*; ./azcopy copy /home/file.zip $linuxFileURL" || retval=$?
     
-    set -x
+    # set -x
     if [ "$retval" -eq 0 ]; then
         log "Upload linux file successfully"
     else
@@ -65,7 +72,7 @@ download_linux_file_from_storage_account() {
         break;
     done
 
-    set +x
+    # set +x
 
     local retval=0
     for i in $(seq 1 20); do
@@ -93,16 +100,16 @@ download_linux_file_from_storage_account() {
         fileExist="true"
         break;
     done
-    set -x
+    # set -x
 
     if [ "$fileExist" == "false" ]; then
         err "File does not exist in storage account."
         exit 1
     fi
 
-    set +x
+    # set +x
     ${array[0]}/azcopy copy $linuxFileURL file.zip
-    set -x
+    # set -x
 
     unzip file.zip
 }

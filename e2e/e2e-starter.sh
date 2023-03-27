@@ -9,8 +9,11 @@ log "Starting e2e tests"
 # Create a resource group for the cluster
 log "Creating resource group"
 if [[ "$RESOURCE_GROUP_NAME" == *"windows"*  ]]; then
-    RESOURCE_GROUP_NAME="$RESOURCE_GROUP_NAME"-"$WINDOWS_E2E_IMAGE"-v2
+    echo "$KUBERNETES_VERSION"
+    RESOURCE_GROUP_NAME="$RESOURCE_GROUP_NAME"-"$WINDOWS_E2E_IMAGE"-"$KUBERNETES_VERSION"
 fi
+
+echo "RG:$RESOURCE_GROUP_NAME"
 
 rgStartTime=$(date +%s)
 az group create -l $LOCATION -n $RESOURCE_GROUP_NAME --subscription $SUBSCRIPTION_ID -ojson
@@ -88,12 +91,16 @@ az vmss list -g $MC_RESOURCE_GROUP_NAME --query "[?contains(name, 'nodepool')]" 
 MC_VMSS_NAME=$(az vmss list -g $MC_RESOURCE_GROUP_NAME --query "[?contains(name, 'nodepool')]" -ojson | jq -r '.[0].name')
 CLUSTER_ID=$(echo $MC_VMSS_NAME | cut -d '-' -f3)
 
+echo "create_cluster is $create_cluster"
 if [[ "$RESOURCE_GROUP_NAME" == *"windows"*  ]]; then
     if [ "$create_cluster" == "true" ]; then
         create_storage_account
+        log "Created SA"
         upload_linux_file_to_storage_account
+        log "Uploaded linux file to SA"
     fi
     download_linux_file_from_storage_account
+    log "Downloaded linux file from SA"
 else
     # privileged ds with nsenter for host file exfiltration
     kubectl apply -f deploy.yaml
@@ -113,7 +120,7 @@ else
     log "Retrieved cluster info in $((clusterInfoEndTime-clusterInfoStartTime)) seconds"
 fi
 
-set +x
+# set +x
 addJsonToFile "apiserverCrt" "$(cat apiserver.crt)"
 addJsonToFile "caCrt" "$(cat ca.crt)"
 addJsonToFile "clientKey" "$(cat client.key)"
@@ -121,7 +128,7 @@ if [ -f "bootstrap-kubeconfig" ] && [ -n "$(cat bootstrap-kubeconfig)" ]; then
     tlsToken="$(grep "token" < bootstrap-kubeconfig | cut -f2 -d ":" | tr -d '"')"
     addJsonToFile "tlsbootstraptoken" "$tlsToken"
 fi
-set -x
+# set -x
 
 # # Add other relevant information needed by AgentBaker for bootstrapping later
 getAgentPoolProfileValues
@@ -137,3 +144,4 @@ set +x
 $(jq -r 'keys[] as $k | "export \($k)=\(.[$k])"' fields.json)
 envsubst < percluster_template.json > percluster_config.json
 jq -s '.[0] * .[1]' nodebootstrapping_template.json percluster_config.json > nodebootstrapping_config.json
+echo "node bootstrapping config json written"
