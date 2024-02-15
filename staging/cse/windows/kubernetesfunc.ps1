@@ -77,7 +77,7 @@ function Write-KubeClusterConfig {
     $Global:ClusterConfiguration = [PSCustomObject]@{ }
 
     $Global:ClusterConfiguration | Add-Member -MemberType NoteProperty -Name Cri -Value @{
-        Name   = $global:ContainerRuntime;
+        Name   = "containerd";
         Images = @{
             # e.g. "mcr.microsoft.com/oss/kubernetes/pause:1.4.1"
             "Pause" = $global:WindowsPauseImageURL
@@ -144,16 +144,14 @@ function Update-DefenderPreferences {
     Add-MpPreference -ExclusionProcess "C:\k\azurecni\bin\azure-vnet.exe"
     Add-MpPreference -ExclusionProcess "C:\k\azurecni\bin\AzureNetworkContainer.exe"
     Add-MpPreference -ExclusionProcess "C:\k\azurecni\bin\CnsWrapperService.exe"
+    Add-MpPreference -ExclusionPath "C:\k\azurecns\azure-endpoints.json"
+    Add-MpPreference -ExclusionPath "C:\k\azure-vnet.log"
 
     if ($global:EnableCsiProxy) {
         Add-MpPreference -ExclusionProcess "c:\k\csi-proxy.exe"
     }
 
-    if ($global:ContainerRuntime -eq 'containerd') {
-        Add-MpPreference -ExclusionProcess "c:\program files\containerd\containerd.exe"
-    } else {
-        Add-MpPreference -ExclusionProcess "C:\Program Files\Docker\dockerd.exe"
-    }
+    Add-MpPreference -ExclusionProcess "c:\program files\containerd\containerd.exe"
 }
 
 function Check-APIServerConnectivity {
@@ -165,7 +163,7 @@ function Check-APIServerConnectivity {
         [Parameter(Mandatory = $false)][int]
         $ConnectTimeout = 10,  #seconds
         [Parameter(Mandatory = $false)][int]
-        $MaxRetryCount = 100
+        $MaxRetryCount = 60
     )
     $retryCount=0
 
